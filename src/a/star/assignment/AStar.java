@@ -6,6 +6,8 @@
 package a.star.assignment;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
+
 
 import javax.sound.sampled.SourceDataLine;
         
@@ -80,19 +82,28 @@ public class AStar {
     }// end of method
     
     
-    
-    public static void displayMap(Node[][] map){
-        System.out.println("************GRID***************");
+    public static void displayMap(Node[][] map, String header){
+        System.out.println("************ " + header + " ***************");
         
-        for (int i = 0; i < N; i++){
-            System.out.print(" ");
-            for (int j = 0; j < N; j++){
-                System.out.print(map[i][j].getSymbol() + " ");
+        for (int i = 0; i < grid.length; i++) {
+            for (int j = 0; j < grid[i].length; j++) {
+                if (i == startRow && j == startCol){
+                    System.out.print(StartColor + "S" + ClearColor); // start node
+                }
+                else if (i == endRow && j == endCol){
+                    System.out.print(GoalColor + "G" + ClearColor); // goal node
+                }
+                else if (!grid[i][j].isBlock){
+                    System.out.print(grid[i][j].solution ? PathColor + "X" + ClearColor : OpenColor + "-" + ClearColor);
+                }
+                else{
+                    System.out.print(BlockColor + "#" + ClearColor); // block
+                }
+                System.out.print(" ");
             }
-            System.out.print("\n");
-        }// end of for-loop
+            System.out.println();
+        } // end of for-loop 
     }// end of method
-    
     
     
     public static void displayScores(){
@@ -114,6 +125,7 @@ public class AStar {
         System.out.println();      
     }// end of method
 
+    
     public static void displaySolution(){
 
         if (closedList[endRow][endCol]){
@@ -123,38 +135,17 @@ public class AStar {
             Node curr = grid[endRow][endCol];
 
             grid[curr.row][curr.col].solution = true;
-            // int index = 1;
             while (curr.parent != null){
-                // System.out.println(index + ": " + curr.parent);
                 grid[curr.parent.row][curr.parent.col].solution = true;
                 curr = curr.parent;
-                // index++;
             }
             System.out.println("\n");
-            for (int i = 0; i < grid.length; i++) {
-                for (int j = 0; j < grid[i].length; j++) {
-                    if (i == startRow && j == startCol){
-                        System.out.print(StartColor + "S" + ClearColor); // start node
-                    }
-                    else if (i == endRow && j == endCol){
-                        System.out.print(GoalColor + "G" + ClearColor); // goal node
-                    }
-                    else if (!grid[i][j].isBlock){
-                        System.out.print(grid[i][j].solution ? PathColor + "X" + ClearColor : OpenColor + "0" + ClearColor);
-                    }
-                    else{
-                        System.out.print(BlockColor + "#" + ClearColor); // block
-                    }
-                    System.out.print(" ");
-                }
-                System.out.println();
-            } // end of for-loop 
+            displayMap(grid, "Solution");
         } else{
             System.out.println("No possible path");
         }// end of primary if-else condition
         
     }// end of method
-    
     
     
     public static void setStart(){   
@@ -183,18 +174,10 @@ public class AStar {
         Goal.setSymbol("G");
         grid[endRow][endCol] = Goal;
     }// end of method
-   
-   
-   
-    /*private static boolean isEmpty(PriorityQueue<Node> list) {
-        list = openList;
-        return list.size() == 0;
-    }*/
-    
-    
+     
     
     public static void updateCost(Node current, Node temp, int cost){
-        if (temp == null || closedList[temp.row][temp.col]){
+        if (temp.isBlock || closedList[temp.row][temp.col]){
             return;
         }
         
@@ -212,25 +195,6 @@ public class AStar {
         } // end of if-statement
         
     } // end of method
-    
-    
-    
-    /*private static List<Node> getPath(Node current) {
-        
-        List<Node> path = new ArrayList<Node>();
-        path.add(current);
-        Node parent;
-        
-        while ((parent = current.getParent()) != null) {
-            path.add(0, parent);
-            current = parent;
-
-        }// end of while-loop
-
-        return path;
-
-    }// end of method*/
-    
     
     
     
@@ -318,168 +282,44 @@ public class AStar {
 
     }// end of method
   
-    
-
-    /*private static void addAdjacentNodes(Node currentNode) {
-        addAdjacentUpperRow(currentNode);
-        addAdjacentMiddleRow(currentNode);
-        addAdjacentLowerRow(currentNode);
-    }// end of method
-
-    
-    
-    private static void addAdjacentLowerRow(Node currentNode) {
-        int row = currentNode.getRow();
-        int col = currentNode.getCol();
-        int lowerRow = row + 1;
-
-        if (lowerRow < grid.length) {
-
-            if (col - 1 >= 0) {
-                checkNode(currentNode, col - 1, lowerRow, getDiagonalCost()); // Comment this line if diagonal movements are not allowed
-            }
-
-            if (col + 1 < grid[0].length) {
-                checkNode(currentNode, col + 1, lowerRow, getDiagonalCost()); // Comment this line if diagonal movements are not allowed
-            }
-
-            checkNode(currentNode, col, lowerRow, getHvCost());
-        }
-    }
-
-    
-    
-    private static void addAdjacentMiddleRow(Node currentNode) {
-        int row = currentNode.getRow();
-        int col = currentNode.getCol();
-        int middleRow = row;
-
-        if (col - 1 >= 0) {
-            checkNode(currentNode, col - 1, middleRow, getHvCost());
-        }
-
-        if (col + 1 < grid[0].length) {
-            checkNode(currentNode, col + 1, middleRow, getHvCost());
-        }
-
-    }
-
-    
-    
-    private static void addAdjacentUpperRow(Node currentNode) {
-        int row = currentNode.getRow();
-        int col = currentNode.getCol();
-        int upperRow = row - 1;
-
-        if (upperRow >= 0) {
-
-            if (col - 1 >= 0) {
-            checkNode(currentNode, col - 1, upperRow, getDiagonalCost()); // Comment this if diagonal movements are not allowed
-            }
-
-            if (col + 1 < grid[0].length) {
-                checkNode(currentNode, col + 1, upperRow, getDiagonalCost()); // Comment this if diagonal movements are not allowed
-            }
-            
-            checkNode(currentNode, col, upperRow, getHvCost());
-        }
-    }*/
-
-    
-    
-    /*private static void checkNode(Node currentNode, int col, int row, int cost) {
-        Node adjacentNode = grid[row][col];
-        if (!adjacentNode.isBlock() && !closedList.contains(adjacentNode)) {
-            if (!openList.contains(adjacentNode)) {
-                adjacentNode.setNodeData(currentNode, cost);
-                openList.add(adjacentNode);
-            } 
-            else {
-                boolean changed = adjacentNode.checkBetterPath(currentNode, cost);
-                if (changed) {
-                    // Remove and Add the changed node, so that the PriorityQueue can sort again its
-                    // contents with the modified "finalCost" value of the modified node
-                    openList.remove(adjacentNode);
-                    openList.add(adjacentNode);
-                }
-            }
-        }
-    }// end of method*/
-    
-    
-    
-    /*public static void displayPathMap(ArrayList<Node> path, Node[][] map){
-        for (int i = 0; i < N; i++) {
-            for (int j = 0; j < N; j++) {
-                for(int x = 0; x <= path.size()-1; x++){
-                    Node n = path.get(x);
-                    if(n.equals(map[i][j])){
-                        map[i][j].setSymbol("X");
-                    }
-                }
-            }
-        }
-    }*/
-    
-    
-    public static void getHeuristic(Node [][]b, Node g){
-         //get heuristic
-         for (int i=0;i<b.length; i++){
-            for(int j=0;j<b[0].length; j++){
-                b[i][j].setH((10*(Math.abs(i-g.getRow())))+(10*(Math.abs(j-g.getCol()))));
-            }
-        }
-     }
-
-
-    public void displayHeuristic(Node [][]d) {
-
-        System.out.println("\nThis is a grid of the heuristics");
-        for(int i=0;i<d.length;i++) {
-            System.out.print("\n");
-            //this sides checks the spacing and add an extra space if it is single digit
-            if (i<10){System.out.print(i + "  | ");}
-            else System.out.print(i+" | ");
-
-            //traverses and gets the value of type for the node
-            for(int j=0;j<d[0].length;j++) {
-                if ((d[i][j].getH()>=10)&&(d[i][j].getH()<=90)){
-                System.out.print(d[i][j].getH()+ "  ");}
-
-                else if (d[i][j].getH()<10){
-                    System.out.print(d[i][j].getH()+ "   ");
-                }
-                else
-                    System.out.print(d[i][j].getH()+ " ");
-
-                System.out.print(" ");
-            }}System.out.println("\n");
-    }
-    
-    
+     
     
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        
-        populateMap(grid);
-        setStart();
-        setEnd();
-        
-        // displayMap(grid);
-        
-        a_star_search();
-        // displayScores();
-        System.out.println("Start: " + Start.toString());
-        System.out.println("End: " + Goal.toString());
-        System.out.println();
+        while(true) {
+            
+            populateMap(grid);
+            setStart();
+            setEnd();
 
-        displayMap(grid);
-        System.out.println();
+            // displayMap(grid);
 
-        displaySolution();
-        System.out.println();
+            a_star_search();
+            // displayScores();
+            System.out.println("Start: " + Start.toString());
+            System.out.println("End: " + Goal.toString());
+            System.out.println();
+
+            displayMap(grid, "Map");
+            System.out.println();
+
+            displaySolution();
+            System.out.println();
+
+            displayScores();
+            System.out.println();
+            
+            grid = new Node[N][N];
+            startRow = endRow = startCol = endCol = 0;
+            openList = new PriorityQueue<Node>((Node n1, Node n2) ->{
+                return n1.getF() < n2.getF() ? -1 : n1.getF() > n2.getF() ? 1 : 0;});
+    
+    // an ArrayList to track the closed list
+            closedList = new boolean[N][N];
+        }
+
     }
     
 }
